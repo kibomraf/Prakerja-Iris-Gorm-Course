@@ -26,6 +26,7 @@ func main() {
 	v1 := app.Party("/v1")
 	{
 		v1.Post("/sign-up", studentHandler.RegisterStudent)
+		v1.Post("/login", studentHandler.LoginStudent)
 	}
 	app.Listen(":8080")
 

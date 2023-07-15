@@ -7,8 +7,9 @@ import (
 )
 
 type Service interface {
-	CreateUser(input Input) (Student, error)
+	CreateStudent(input Input) (Student, error)
 	CheckEmailAvailibity(email string) (bool, error)
+	LoginStudent(input Login) (Student, error)
 }
 type service struct {
 	repository Repository
@@ -19,7 +20,7 @@ func StudentService(repository Repository) *service {
 }
 
 // logic bussines : create new user.
-func (s *service) CreateUser(input Input) (Student, error) {
+func (s *service) CreateStudent(input Input) (Student, error) {
 	//mapping input
 	student := Student{
 		Name:        input.Name,
@@ -52,4 +53,21 @@ func (s *service) CheckEmailAvailibity(email string) (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+// login logic
+func (s *service) LoginStudent(input Login) (Student, error) {
+	//mapping input login
+	email, password := input.Email, input.Password
+	//calling logic bussines
+	student, err := s.repository.FindByEmail(email)
+	if err != nil {
+		return Student{}, err
+	}
+	//compare input password and real password
+	err = bcrypt.CompareHashAndPassword([]byte(student.Password_hash), []byte(password))
+	if err != nil {
+		return Student{}, err
+	}
+	return student, nil
 }

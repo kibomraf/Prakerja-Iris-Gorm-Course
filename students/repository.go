@@ -9,6 +9,7 @@ import (
 type Repository interface {
 	Save(student Student) (Student, error)
 	CheckEmail(email string) (Student, error)
+	FindByEmail(email string) (Student, error)
 }
 type repository struct {
 	db *gorm.DB
@@ -31,6 +32,14 @@ func (r *repository) CheckEmail(email string) (Student, error) {
 	err := r.db.Where("email = ?", email).Find(&student).Error
 	if err != nil {
 		return Student{}, errors.New("email has benn created")
+	}
+	return student, nil
+}
+func (r *repository) FindByEmail(email string) (Student, error) {
+	var student Student
+	err := r.db.Where("email = ?", email).Find(&student).Error
+	if err != nil {
+		return Student{}, nil
 	}
 	return student, nil
 }
