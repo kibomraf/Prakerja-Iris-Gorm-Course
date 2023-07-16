@@ -20,7 +20,7 @@ func main() {
 		app.Logger()
 	}
 	//service auth
-	authService := auth.AuthService()
+	authService := auth.AuthService("Prakerja")
 	//student repository
 	studentRepository := students.StudentRepository(db)
 	//student Service

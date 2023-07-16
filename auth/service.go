@@ -12,22 +12,23 @@ type Service interface {
 	ValidateToken(token string) (*jwt.Token, error)
 }
 type jwtService struct {
+	secretKey string
 }
 
-func AuthService() *jwtService {
-	return &jwtService{}
+func AuthService(secretKey string) *jwtService {
+	return &jwtService{secretKey}
 }
 func (s *jwtService) GenerateToken(studentId int) (string, error) {
 	claims := jwt.MapClaims{
-		"id":         studentId,
-		"expired_at": time.Now().Add(12 * time.Hour),
+		"user_id": studentId,
+		"exp":     time.Now().Add(time.Hour * 12).Unix(),
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
-	tokenSigned, err := token.SignedString("Prakerja")
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(s.secretKey))
 	if err != nil {
 		return "", err
 	}
-	return tokenSigned, nil
+	return tokenString, nil
 }
 func (s *jwtService) ValidateToken(tokenstring string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenstring, func(t *jwt.Token) (interface{}, error) {
@@ -35,7 +36,7 @@ func (s *jwtService) ValidateToken(tokenstring string) (*jwt.Token, error) {
 		if !ok {
 			return nil, errors.New("invalid token")
 		}
-		return []byte("Prakerja"), nil
+		return []byte(s.secretKey), nil
 	})
 	if err != nil {
 		return nil, err

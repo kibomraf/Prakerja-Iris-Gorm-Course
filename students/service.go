@@ -1,6 +1,7 @@
 package students
 
 import (
+	"errors"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -62,12 +63,12 @@ func (s *service) LoginStudent(input Login) (Student, error) {
 	//calling logic bussines
 	student, err := s.repository.FindByEmail(email)
 	if err != nil {
-		return Student{}, err
+		return Student{}, errors.New("email is wrong")
 	}
 	//compare input password and real password
 	err = bcrypt.CompareHashAndPassword([]byte(student.Password_hash), []byte(password))
 	if err != nil {
-		return Student{}, err
+		return Student{}, errors.New("password is wrong")
 	}
 	return student, nil
 }

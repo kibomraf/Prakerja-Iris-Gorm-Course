@@ -90,7 +90,7 @@ func (h *handler) LoginStudent(ctx iris.Context) {
 	loginStudent, err := h.service.LoginStudent(input)
 	if err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
-		APIResponse := helper.APIresponse(iris.StatusInternalServerError, "falied to login", "failed", nil)
+		APIResponse := helper.APIresponse(iris.StatusInternalServerError, "email or password is wrong", "failed", err)
 		ctx.JSON(APIResponse)
 		return
 	}
