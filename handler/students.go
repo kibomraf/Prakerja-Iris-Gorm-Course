@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"final-project/auth"
 	"final-project/helper"
 	"final-project/students"
 
@@ -9,15 +10,16 @@ import (
 )
 
 type handler struct {
-	service students.Service
+	service     students.Service
+	authservice auth.Service
 }
 
-func StudentHandler(service students.Service) *handler {
-	return &handler{service}
+func StudentHandler(service students.Service, auth auth.Service) *handler {
+	return &handler{service, auth}
 }
 
 // handler Register User
-func (s *handler) RegisterStudent(ctx iris.Context) {
+func (h *handler) RegisterStudent(ctx iris.Context) {
 	//json parameter
 	var input students.Input
 	err := ctx.ReadJSON(&input)
@@ -38,7 +40,7 @@ func (s *handler) RegisterStudent(ctx iris.Context) {
 	}
 	//call bussines logic
 	//busines logic check email
-	checkEmail, err := s.service.CheckEmailAvailibity(input.Email)
+	checkEmail, err := h.service.CheckEmailAvailibity(input.Email)
 	if err != nil || !checkEmail {
 		ctx.StatusCode(iris.StatusFound)
 		APIResponse := helper.APIresponse(iris.StatusFound, "email has been created", "failed", nil)
@@ -46,14 +48,21 @@ func (s *handler) RegisterStudent(ctx iris.Context) {
 		return
 	}
 	//bussiness logic save user
-	newStudent, err := s.service.CreateStudent(input)
+	newStudent, err := h.service.CreateStudent(input)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
-		APIResponse := helper.APIresponse(iris.StatusInternalServerError, "falied to create account 3", "failed", nil)
+		APIResponse := helper.APIresponse(iris.StatusInternalServerError, "falied to create account", "failed", nil)
 		ctx.JSON(APIResponse)
 		return
 	}
-	formatter := students.FormatStudents(newStudent, "")
+	token, err := h.authservice.GenerateToken(newStudent.Id)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		APIResponse := helper.APIresponse(iris.StatusInternalServerError, "failed to create token", "failed", nil)
+		ctx.JSON(APIResponse)
+		return
+	}
+	formatter := students.FormatStudents(newStudent, token)
 	APIResponse := helper.APIresponse(iris.StatusOK, "account has been created", "successfully", formatter)
 	ctx.JSON(APIResponse)
 	ctx.StatusCode(iris.StatusOK)
@@ -85,7 +94,14 @@ func (h *handler) LoginStudent(ctx iris.Context) {
 		ctx.JSON(APIResponse)
 		return
 	}
-	formatter := students.FormatStudents(loginStudent, "")
+	token, err := h.authservice.GenerateToken(loginStudent.Id)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		APIResponse := helper.APIresponse(iris.StatusInternalServerError, "failed to create token", "failed", nil)
+		ctx.JSON(APIResponse)
+		return
+	}
+	formatter := students.FormatStudents(loginStudent, token)
 	APIResponse := helper.APIresponse(iris.StatusOK, "login successfull", "success", formatter)
 	ctx.JSON(APIResponse)
 	ctx.StatusCode(iris.StatusOK)
